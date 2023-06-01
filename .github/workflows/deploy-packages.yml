@@ -1,4 +1,4 @@
-name: Deploy Packages
+name: Deploy Package
 
 on:
   workflow_dispatch:
@@ -45,5 +45,5 @@ jobs:
 
     - name: Publish Package
       run: |
-        cd ${{ steps.pom-metadata.outputs.path }}
+        cd ${ steps.pom-metadata.outputs.path }
         mvn -B -U deploy
