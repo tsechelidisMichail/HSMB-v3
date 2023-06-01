@@ -1,0 +1,27 @@
+name: Merge workflows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'workflows'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Merge Branches
+        run: |
+          git clone https://github.com/tsechelidisMichail/HSMB-v3.git
+          cd HSMB-v3
+          branches=$(git branch -a | sed -n 's/.*origin\/\([^ ]*\).*/\1/p' | sort | uniq)
+
+          for branch in $branches; do
+            if [ "$branch" != "workflow" ]; then
+              git switch $branch
+              git merge workflow --no-commit
+            fi
+          done
+          git push https://${{ secrets.MAVEN_REPO_TOKEN }}@github.com/tsechelidisMichail/HSMB-v3.git --all
+      
