@@ -1,0 +1,49 @@
+name: Deploy Package
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '.github/workflows/*'
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-java@v3
+      with:
+        java-version: '19'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Set settings.xml
+      uses: whelk-io/maven-settings-xml-action@v20
+      with:
+        repositories: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "url": "${{ secrets.MAVEN_REPO_URL }}" }]'
+        servers: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "username": "${{ secrets.MAVEN_REPO_NAME }}", "password": "${{ secrets.MAVEN_REPO_TOKEN }}" }]'
+
+    - name: Find pom metadata
+      id: pom-metadata
+      run: |
+        export POM_PATH=$(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
+        cd $POM_PATH
+        export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
+        export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
+        COORDINATES="$GROUP_ID.$ARTIFACT_ID"
+        echo "coordinates=$COORDINATES" >> $GITHUB_OUTPUT
+        echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
+
+    - name: Delete package
+      uses: actions/delete-package-versions@v2
+      with:
+        token: ${{ secrets.MAVEN_REPO_TOKEN }}
+        package-name: ${{ steps.pom-metadata.outputs.coordinates }}
+        package-type: 'maven'
+
+    - name: Publish Package
+      run: |
+        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        mvn -B -U deploy
