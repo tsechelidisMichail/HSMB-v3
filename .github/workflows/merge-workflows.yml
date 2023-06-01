@@ -14,6 +14,7 @@ jobs:
       - name: Merge Branches
         run: |
           git clone https://github.com/tsechelidisMichail/HSMB-v3.git
+          cd HSMB-v3
           branches=$(git branch -a | sed -n 's/.*origin\/\([^ ]*\).*/\1/p' | sort | uniq)
 
           for branch in $branches; do
