@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Merge Branches
         run: |
+          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+          git config --global user.name "tsechelidisMichail"
           git clone https://github.com/tsechelidisMichail/HSMB-v3.git
           cd HSMB-v3
           git switch workflows
