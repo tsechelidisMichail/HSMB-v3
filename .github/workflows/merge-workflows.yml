@@ -15,6 +15,7 @@ jobs:
         run: |
           git clone https://github.com/tsechelidisMichail/HSMB-v3.git
           cd HSMB-v3
+          git switch workflows
           branches=$(git branch -a | sed -n 's/.*origin\/\([^ ]*\).*/\1/p' | sort | uniq)
 
           for branch in $branches; do
