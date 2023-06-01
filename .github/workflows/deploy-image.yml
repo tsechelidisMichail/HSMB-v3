@@ -1,2 +1,14 @@
-#TODO: create images that represent bundled services to be deployed to k8s(assuming they have same requirements)
+# TODO: create images that represent bundled services to be deployed to k8s(assuming they have same requirements)
 # we have somewhere defined the bundles and those services should be reflected in the main/pom.xml as runtime dependencies
+
+name: Deploy Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "todo"
