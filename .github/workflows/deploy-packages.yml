@@ -28,13 +28,11 @@ jobs:
     - name: Find pom metadata
       id: pom-metadata
       run: |
-        export PATH=$(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
-        cd $PATH
+        cd cd $(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
         export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
         export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
         COORDINATES="$GROUP_ID.$ARTIFACT_ID"
         echo "coordinates={$COORDINATES}" >> $GITHUB_OUTPUT
-        echo "path={$PATH}" >> $GITHUB_OUTPUT
 
     - name: Delete package
       uses: actions/delete-package-versions@v2
@@ -45,5 +43,5 @@ jobs:
 
     - name: Publish Package
       run: |
-        cd '${{ steps.pom-metadata.outputs.path }}//\{}//'
+        cd $(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
         mvn -B -U deploy
