@@ -10,14 +10,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
       - name: Merge Branches
         run: |
-          branches=$(git branch --list | cut -c 3-)
+          git clone https://github.com/tsechelidisMichail/HSMB-v3.git
+          branches=$(git branch -a | sed -n 's/.*origin\/\([^ ]*\).*/\1/p' | sort | uniq)
 
           for branch in $branches; do
             if [ "$branch" != "workflow" ]; then
