@@ -28,8 +28,10 @@ jobs:
     - name: Find pom metadata
       id: pom-metadata
       run: |
+        mvn -v
         export PATH=$(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
         cd $PATH
+        mvn -v
         export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
         export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
         COORDINATES="$GROUP_ID.$ARTIFACT_ID"
