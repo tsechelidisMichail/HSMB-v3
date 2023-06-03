@@ -7,7 +7,7 @@ on:
       - 'workflows'
 
 jobs:
-  build:
+  merge:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,14 +17,11 @@ jobs:
           git config --global user.name "tsechelidisMichail"
           git clone https://github.com/tsechelidisMichail/HSMB-v3.git
           cd HSMB-v3
-          git switch workflows
-          branches=$(git branch -a | sed -n 's/.*origin\/\([^ ]*\).*/\1/p' | sort | uniq)
+          branches=$(git branch -a | sed 's/.*origin\///' | tail -n +3 | grep -v "workflows")
 
           for branch in $branches; do
-            if [ "$branch" != "workflow" ]; then
               git switch $branch
               git merge workflows
-            fi
           done
           git push https://${{ secrets.MAVEN_REPO_TOKEN }}@github.com/tsechelidisMichail/HSMB-v3.git --all
       
