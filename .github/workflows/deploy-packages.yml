@@ -45,4 +45,4 @@ jobs:
     - name: Publish Package
       run: |
         cd ${{ steps.pom-metadata.outputs.pom-path }}
-        mvn -B -U deploy
+        mvn -B deploy
