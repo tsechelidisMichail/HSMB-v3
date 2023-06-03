@@ -7,7 +7,7 @@ on:
       - '.github/workflows/*'
       
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -41,7 +41,6 @@ jobs:
       with:
         token: ${{ secrets.MAVEN_REPO_TOKEN }}
         package-name: ${{ steps.pom-metadata.outputs.coordinates }}
-        package-type: 'maven'
 
     - name: Publish Package
       run: |
