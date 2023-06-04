@@ -39,6 +39,7 @@ jobs:
 
     - name: Check project's dependencies for update
       run: |
+        set -x
         mvn dependency:list | grep "${{ steps.pom-metadata.outputs.group }}" > list.txt
         
         for dependency in $(cat list.txt | sed -n "s/.*${{ steps.pom-metadata.outputs.group }}:\([^:]*\):.*$/\1/p");do 
