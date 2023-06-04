@@ -43,7 +43,7 @@ jobs:
         
         for dependency in $(cat list.txt | sed -n "s/.*${{ steps.pom-metadata.outputs.group }}:\([^:]*\):.*$/\1/p");do 
         
-          version=$(cat list.txt | sed -n "s/.*$dependency:jar:\([^:]*\):.*$/\1/p"
+          version=$(cat list.txt | sed -n "s/.*$dependency:jar:\([^:]*\):.*$/\1/p")
           remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$dependency/$version/$dependency-$version.jar.sha1)
           local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency"
           local_sha=$( cat $local_path/$version/$dependency-$version.jar.sha1)
