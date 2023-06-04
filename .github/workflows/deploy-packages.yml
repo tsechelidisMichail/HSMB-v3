@@ -50,7 +50,7 @@ jobs:
           local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency"
           local_sha=$( cat $local_path/$version/$dependency-$version.jar.sha1)
         
-          if [ local_sha != remote_sha ] ;then
+          if [ $local_sha != $remote_sha ] ;then
             rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency
           fi
         
