@@ -17,11 +17,11 @@ class AccountAdapter implements LoadAccount, UpdateAccount {
 
 	private final AbstractAccountFactory accountFactory;
 
-	//createAccountt vs createAccount5
+	//createAccountt vs createAccount6
 	@Override
 	public Account loadAccount(int id) {
 		AccountJpaEntity account = accountJpaRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-		return accountFactory.createAccountt(account.getId(), account.getBalance());
+		return accountFactory.createAccount(account.getId(), account.getBalance());
 	}
 
 	@Override
