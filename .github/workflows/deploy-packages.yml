@@ -55,7 +55,7 @@ jobs:
           fi
         
         done
-        mvn -B dependency:resolve
+        mvn -B install
         
 
     - name: Delete package
