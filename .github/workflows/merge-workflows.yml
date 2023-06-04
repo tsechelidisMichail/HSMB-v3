@@ -10,6 +10,8 @@ jobs:
   merge:
     runs-on: ubuntu-latest
 
+#TODO: add prefix to production branches, only those need to be updated with the newest workflows that target production branches
+#TODO: rename -> grep "^prod-"
     steps:
       - name: Merge Branches
         run: |
