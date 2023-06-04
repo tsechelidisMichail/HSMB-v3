@@ -11,7 +11,6 @@ import web.application.port.in.DepositUseCase;
 @RequiredArgsConstructor
 class DepositController {
 	private final DepositUseCase depositUseCase;
-//test comment2
 	@PostMapping(path = "/account/deposit/{id}/{amount}")
 	String deposit(@PathVariable int id, @PathVariable int amount) {
 		CommandBalanceDTO data = new CommandBalanceDTO(id, amount);
