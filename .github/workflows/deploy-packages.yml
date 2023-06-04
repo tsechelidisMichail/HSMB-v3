@@ -33,8 +33,30 @@ jobs:
         export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
         export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
         COORDINATES="$GROUP_ID.$ARTIFACT_ID"
+        echo "group=$GROUP_ID" >> $GITHUB_OUTPUT
         echo "coordinates=$COORDINATES" >> $GITHUB_OUTPUT
         echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
+
+    - name: Check project's dependencies for update
+      run: |
+        mvn dependency:list | grep "${{ steps.pom-metadata.outputs.group }}" > list.txt
+        
+        for dependency in $(cat list.txt | sed -n "s/.*${{ steps.pom-metadata.outputs.group }}:\([^:]*\):.*$/\1/p");do 
+        
+          version=$(cat list.txt | sed -n "s/.*$dependency:jar:\([^:]*\):.*$/\1/p"
+          remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$dependency/$version/$dependency-$version.jar.sha1)
+          local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency"
+          local_sha=$( cat $local_path/$version/$dependency-$version.jar.sha1)
+        
+          if [ local_sha != remote_sha ] ;then
+            rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency
+          fi
+        
+        done
+        
+        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        mvn -B dependency:resolve
+        
 
     - name: Delete package
       uses: actions/delete-package-versions@v2
