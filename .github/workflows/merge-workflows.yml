@@ -1,0 +1,28 @@
+name: Merge workflows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'workflows'
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Merge Branches
+        run: |
+          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+          git config --global user.name "tsechelidisMichail"
+          git clone https://github.com/$GITHUB_REPOSITORY
+          cd HSMB-v3
+          git switch workflows
+          branches=$(git branch -a | sed -n "s/.*remotes\/origin\/\(prod-\)/\1/p")
+
+          for branch in $branches; do
+              git switch $branch
+              git merge workflows
+          done
+          git push https://${{ secrets.MAVEN_REPO_TOKEN }}@github.com/$GITHUB_REPOSITORY --all
+      
