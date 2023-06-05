@@ -11,4 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "todo - create docker image based on main"
+      - uses: actions/checkout@v3
+        with:
+          ref: prod-main
+
+      - run: |
+          echo "hi"
