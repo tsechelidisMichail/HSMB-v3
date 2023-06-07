@@ -2,7 +2,7 @@ package domain;
 
 public interface Account {
 
-	boolean deposit(int data);
+	boolean depositt(int data);
 
 	boolean withdraw(int data);
 
