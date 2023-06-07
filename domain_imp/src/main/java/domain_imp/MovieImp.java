@@ -3,6 +3,7 @@ package domain_imp;
 import domain.Movie;
 import lombok.Getter;
 
+
 @Getter
 public class MovieImp implements Movie {
 
