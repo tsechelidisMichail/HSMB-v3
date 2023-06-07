@@ -53,10 +53,12 @@ jobs:
           if [ $local_sha != $remote_sha ] ;then
             rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency
           fi
-        
         done
+
+    - name: Install package
+      run: |
+        cd ${{ steps.pom-metadata.outputs.pom-path }}
         mvn -B install
-        
 
     - name: Delete package
       uses: actions/delete-package-versions@v2
