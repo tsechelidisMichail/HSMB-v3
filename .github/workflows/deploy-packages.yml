@@ -61,6 +61,12 @@ jobs:
         echo "global_dependencies=$(sed -z 's/\n/,/g;s/,$/\n/' $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
         echo "dependencies_diff=$(sed -z 's/\n/,/g;s/,$/\n/' dependencies_diff.txt)" >> $GITHUB_OUTPUT
         echo "packages=$(sed -z 's/\n/,/g;s/,$/\n/' packages.txt)" >> $GITHUB_OUTPUT
+        
+        dependencies_diff_empty="yes"
+        if [[ -s dependencies_diff.txt ]]; then
+          dependencies_diff_empty="no"
+        fi
+        echo "diff_empty=$dependencies_diff_empty" >> $GITHUB_OUTPUT
 
 
     - name: Cache global_dependencies
@@ -73,6 +79,7 @@ jobs:
 
     - name: Cache dependencies_diff
       uses: actions/cache@v2
+      if: ${{ ${{ steps.diff.outputs.diff_empty }} == "no"
       with:
         path: |
           ${{ steps.diff.outputs.dependencies_diff }}
