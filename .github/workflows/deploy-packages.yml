@@ -104,7 +104,7 @@ jobs:
         
         for package in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
         
-          version=$(cat packages.txt | grep $package | sed -E 's|.*/([^/]+)/?$|\1|')
+          version=$(cat packages.txt | grep "$package/" | sed -E 's|.*/([^/]+)/?$|\1|')
           remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$package/$version/$package-$version.jar.sha1)
           local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$package"
           local_sha=$( cat $local_path/$version/$package-$version.jar.sha1)
