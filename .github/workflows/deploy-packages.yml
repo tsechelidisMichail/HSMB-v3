@@ -58,6 +58,7 @@ jobs:
         cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
         
         echo "global_dependencies=$(cat $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
+        echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
         echo ${{ steps.diff.outputs.global_dependencies }}
         echo "dependencies_diff=$(cat dependencies_diff.txt)" >> $GITHUB_OUTPUT
         echo "packages=$(cat packages.txt)" >> $GITHUB_OUTPUT
@@ -67,14 +68,6 @@ jobs:
           dependencies_diff_empty=false
         fi
         echo "diff_empty=$dependencies_diff_empty" >> $GITHUB_ENV
-
-    - name: Cache global_dependencies
-      uses: actions/cache@v2
-      with:
-        path: |
-          ${{ steps.diff.outputs.global_dependencies }}
-        key: |
-          ${{ runner.os }}-global_dependencies
 
     - name: Cache dependencies_diff
       uses: actions/cache@v2
@@ -92,6 +85,14 @@ jobs:
           ${{ steps.diff.outputs.packages }}
         key: |
           ${{ runner.os }}-packages
+
+    - name: Cache global_dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.diff.outputs.global_dependencies }}
+        key: |
+          ${{ runner.os }}-global_dependencies
           
 
     - name: Check project's dependencies for update
