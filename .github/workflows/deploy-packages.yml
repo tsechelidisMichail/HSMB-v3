@@ -44,18 +44,18 @@ jobs:
         set -x
         #get parent pom global dependencies
         curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml" > $GITHUB_WORKSPACE/pom.xml
-        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|~/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
+        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
         
         cd ${{ steps.pom-metadata.outputs.pom-path }}
         
         #get current dependencies
-        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|~/.m2/repository/|; s/:/\//g" > current_dependencies.txt
+        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > current_dependencies.txt
         
         #find diff
         diff $GITHUB_WORKSPACE/dependency_paths.txt current_dependencies.txt | grep -E '^< |^> ' | sed 's/^< //;s/^> //' > temp.txt
         
         #seperate to current project with third parties
-        cat temp.txt | grep -Ev "~/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" || true > dependencies_diff.txt
+        cat temp.txt | grep -Ev "$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" || true > dependencies_diff.txt
         cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
         
         echo "global_dependencies=$(cat $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
