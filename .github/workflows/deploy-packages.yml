@@ -5,7 +5,9 @@ on:
   push:
     paths-ignore:
       - '.github/workflows/*'
-      
+    branches:
+      - 'prod-*'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,7 +19,6 @@ jobs:
       with:
         java-version: '19'
         distribution: 'temurin'
-        cache: 'maven'
 
     - name: Set settings.xml
       uses: whelk-io/maven-settings-xml-action@v20
@@ -37,28 +38,85 @@ jobs:
         echo "coordinates=$COORDINATES" >> $GITHUB_OUTPUT
         echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
 
+    - name: Find branch dependency diff
+      id: diff
+      run: |
+        #get parent pom global dependencies
+        curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml"
+        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|~/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
+        
+        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        
+        #get current dependencies
+        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|~/.m2/repository/|; s/:/\//g" > current_dependencies.txt
+        
+        #find diff
+        diff $GITHUB_WORKSPACE/dependency_paths.txt current_dependencies.txt | grep -E '^< |^> ' | sed 's/^< //;s/^> //' > temp.txt
+        
+        #seperate to current project with third parties
+        cat temp.txt | grep -Ev "~/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" > dependencies_diff.txt
+        cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
+        
+        echo "global_dependencies=$$(sed -z 's/\n/,/g;s/,$/\n/' $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
+        echo "dependencies_diff=$(sed -z 's/\n/,/g;s/,$/\n/' dependencies_diff.txt)" >> $GITHUB_OUTPUT
+        echo "packages=$(sed -z 's/\n/,/g;s/,$/\n/' packages.txt)" >> $GITHUB_OUTPUT
+
+
+    - name: Cache global_dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.diff.outputs.global_dependencies }}
+        key: |
+          ${{ runner.os }}-global_dependencies
+
+    - name: Cache dependencies_diff
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.diff.outputs.dependencies_diff }}
+        key: |
+          ${{ runner.os }}-dependencies_diff-${{ github.ref_slug }}
+
+    - name: Cache packages
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.diff.outputs.packages }}
+        key: |
+          ${{ runner.os }}-packages
+          
+
     - name: Check project's dependencies for update
+      id: check_update
       run: |
         set -x
         cd ${{ steps.pom-metadata.outputs.pom-path }}
-        mvn dependency:list | grep "${{ steps.pom-metadata.outputs.group }}" > list.txt
+        re-save="no"
         
-        for dependency in $(cat list.txt | sed -n "s/.*${{ steps.pom-metadata.outputs.group }}:\([^:]*\):.*$/\1/p");do 
+        for package in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
         
-          version=$(cat list.txt | sed -n "s/.*$dependency:jar:\([^:]*\):.*$/\1/p")
+          version=$(cat packages.txt | sed -E 's|.*/([^/]+)/?$|\1|')
           remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$dependency/$version/$dependency-$version.jar.sha1)
           local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency"
           local_sha=$( cat $local_path/$version/$dependency-$version.jar.sha1)
         
           if [ $local_sha != $remote_sha ] ;then
-            rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency
+            rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency/
+            re-save="yes"
           fi
         done
-
-    - name: Install package
-      run: |
-        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        echo "save=$re-save" >> $GITHUB_OUTPUT
         mvn -B install
+
+    - name: Re-Cache packages
+      uses: actions/cache@v2
+      if: ${{ steps.check_update.outputs.save }} == yes
+      with:
+        path: |
+          ${{ steps.diff.outputs.packages }}
+        key: |
+          ${{ runner.os }}-packages
 
     - name: Delete package
       uses: actions/delete-package-versions@v2
