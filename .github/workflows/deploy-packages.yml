@@ -38,14 +38,6 @@ jobs:
         echo "coordinates=$COORDINATES" >> $GITHUB_OUTPUT
         echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
 
-    - name: Cache global_dependencies
-      uses: actions/cache@v2
-      with:
-        path: |
-          ${{ steps.diff.outputs.global_dependencies }}
-        key: |
-          ${{ runner.os }}-global_dependencies
-
     - name: Find branch dependency diff
       id: diff
       run: |
@@ -53,7 +45,6 @@ jobs:
         #get parent pom global dependencies
         curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml" > $GITHUB_WORKSPACE/pom.xml
         mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed 's/\([^:]*\):/\1\n/;h;s/[^:]*://;s/\./\//g;G;s/\n.*\n/:/' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
-        mvn -B install
         
         cd ${{ steps.pom-metadata.outputs.pom-path }}
         
@@ -67,6 +58,7 @@ jobs:
         cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
         
         echo "global_dependencies=$(cat $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
+        echo ${{ steps.diff.outputs.global_dependencies }}
         echo "dependencies_diff=$(cat dependencies_diff.txt)" >> $GITHUB_OUTPUT
         echo "packages=$(cat packages.txt)" >> $GITHUB_OUTPUT
         
@@ -75,6 +67,14 @@ jobs:
           dependencies_diff_empty=false
         fi
         echo "diff_empty=$dependencies_diff_empty" >> $GITHUB_ENV
+
+    - name: Cache global_dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ steps.diff.outputs.global_dependencies }}
+        key: |
+          ${{ runner.os }}-global_dependencies
 
     - name: Cache dependencies_diff
       uses: actions/cache@v2
