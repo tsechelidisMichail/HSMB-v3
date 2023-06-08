@@ -17,6 +17,7 @@ class AccountAdapter implements LoadAccount, UpdateAccount {
 
 	private final AbstractAccountFactory accountFactory;
 
+
 	@Override
 	public Account loadAccount(int id) {
 		AccountJpaEntity account = accountJpaRepository.findById(id).orElseThrow(EntityNotFoundException::new);
