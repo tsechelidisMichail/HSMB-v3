@@ -34,9 +34,9 @@ jobs:
         export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
         export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
         COORDINATES="$GROUP_ID.$ARTIFACT_ID"
-        echo "group=$GROUP_ID" >> $GITHUB_OUTPUT
-        echo "coordinates=$COORDINATES" >> $GITHUB_OUTPUT
-        echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
+        echo "group=$GROUP_ID" >> $GITHUB_ENV
+        echo "coordinates=$COORDINATES" >> $GITHUB_ENV
+        echo "pom-path=$POM_PATH" >> $GITHUB_ENV
 
     - name: Find branch dependency diff
       id: diff
@@ -57,8 +57,8 @@ jobs:
         #seperate to current project with third parties
         touch dependencies_diff.txt
         touch packages.txt
-        cat temp.txt | grep -Ev "$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" || true > dependencies_diff.txt
-        cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" || true > packages.txt
+        cat temp.txt | grep -Ev "$HOME/.m2/repository/${{ env.group }}/" || true > dependencies_diff.txt
+        cat temp.txt | grep "${{ env.group }}" || true > packages.txt
         
         echo "global_dependencies=$(sed -z 's/\n/,/g;s/,$/\n/' $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
         echo "dependencies_diff=$(sed -z 's/\n/,/g;s/,$/\n/' dependencies_diff.txt)" >> $GITHUB_OUTPUT
@@ -108,19 +108,19 @@ jobs:
       if: steps.cache_packages.outputs.cache-hit == 'true'
       run: |
         set -x
-        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        cd ${{ env.pom-path }}
         re_save=false
         
         for pkg in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
-          package=$(echo "$GITHUB_REPOSITORY/$pkg" | sed "s/${{ steps.pom-metadata.outputs.group }}\///;s/\//./")
+          package=$(echo "$GITHUB_REPOSITORY/$pkg" | sed "s/${{ env.group }}\///;s/\//./")
         
           version=$(cat packages.txt | grep "$pkg/" | sed -E 's|.*/([^/]+)/?$|\1|')
-          remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$package/$version/$package-$version.jar.sha1)
-          local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$package"
+          remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ env.group }}/$package/$version/$package-$version.jar.sha1)
+          local_path="$HOME/.m2/repository/${{ env.group }}/$package"
           local_sha=$( cat $local_path/$version/$package-$version.jar.sha1)
         
           if [ $local_sha != $remote_sha ] ;then
-            rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$package/
+            rm -rf $HOME/.m2/repository/${{ env.group }}/$package/
             re_save=true
           fi
         done
@@ -140,11 +140,11 @@ jobs:
       uses: actions/delete-package-versions@v2
       with:
         token: ${{ secrets.MAVEN_REPO_TOKEN }}
-        package-name: ${{ steps.pom-metadata.outputs.coordinates }}
+        package-name: ${{ env.coordinates }}
 
     - name: Publish Package
       run: |
-        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        cd ${{ env.pom-path }}
         mvn compile
         mvn install
         mvn deploy
