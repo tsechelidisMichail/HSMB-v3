@@ -103,7 +103,8 @@ jobs:
         cd ${{ steps.pom-metadata.outputs.pom-path }}
         re_save=false
         
-        for package in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
+        for pkc in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
+          package=$(echo "$GITHUB_REPOSITORY/$package" | sed "s/${{ steps.pom-metadata.outputs.group }}\///;s/\//./")
         
           version=$(cat packages.txt | grep "$package/" | sed -E 's|.*/([^/]+)/?$|\1|')
           remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$package/$version/$package-$version.jar.sha1)
