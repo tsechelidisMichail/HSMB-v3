@@ -58,7 +58,7 @@ jobs:
         touch dependencies_diff.txt
         touch packages.txt
         cat temp.txt | grep -Ev "$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" || true > dependencies_diff.txt
-        cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
+        cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" || true > packages.txt
         
         echo "global_dependencies=$(sed -z 's/\n/,/g;s/,$/\n/' $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
         echo "dependencies_diff=$(sed -z 's/\n/,/g;s/,$/\n/' dependencies_diff.txt)" >> $GITHUB_OUTPUT
@@ -69,6 +69,12 @@ jobs:
           dependencies_diff_empty=false
         fi
         echo "diff_empty=$dependencies_diff_empty" >> $GITHUB_ENV
+        
+        dependencies_packages_empty=true
+        if [[ -s packages.txt ]]; then
+          dependencies_packages_empty=false
+        fi
+        echo "packages_empty=$dependencies_packages_empty" >> $GITHUB_ENV
 
     - name: Cache global_dependencies
       uses: actions/cache@v2
@@ -90,6 +96,7 @@ jobs:
     - name: Cache packages
       id: cache_packages
       uses: actions/cache@v2
+      if: env.packages_empty == 'false'
       with:
         path: |
           {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
@@ -138,4 +145,6 @@ jobs:
     - name: Publish Package
       run: |
         cd ${{ steps.pom-metadata.outputs.pom-path }}
-        mvn -B deploy
+        mvn compile
+        mvn install
+        mvn deploy
