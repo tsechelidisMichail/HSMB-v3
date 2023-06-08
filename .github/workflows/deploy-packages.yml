@@ -100,8 +100,6 @@ jobs:
       if: steps.cache_packages.outputs.cache-hit == 'true'
       run: |
         set -x
-        echo "Cache Paths: ${{ steps.cache_packages.outputs.cache-paths }}"
-        find / -type d -path "*/.m2*"
         cd ${{ steps.pom-metadata.outputs.pom-path }}
         re_save=false
         
