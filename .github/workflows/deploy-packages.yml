@@ -58,9 +58,9 @@ jobs:
         cat temp.txt | grep -Ev "~/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" || true > dependencies_diff.txt
         cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
         
-        echo "global_dependencies=$(sed -z 's/\n/,/g;s/,$/\n/' $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
-        echo "dependencies_diff=$(sed -z 's/\n/,/g;s/,$/\n/' dependencies_diff.txt)" >> $GITHUB_OUTPUT
-        echo "packages=$(sed -z 's/\n/,/g;s/,$/\n/' packages.txt)" >> $GITHUB_OUTPUT
+        echo "global_dependencies=$(cat $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
+        echo "dependencies_diff=$(cat dependencies_diff.txt)" >> $GITHUB_OUTPUT
+        echo "packages=$(cat packages.txt)" >> $GITHUB_OUTPUT
         
         dependencies_diff_empty=true
         if [[ -s dependencies_diff.txt ]]; then
