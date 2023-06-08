@@ -54,15 +54,17 @@ jobs:
         diff $GITHUB_WORKSPACE/dependency_paths.txt current_dependencies.txt | grep -E '^< |^> ' | sed 's/^< //;s/^> //' > temp.txt
         
         #seperate to current project with third parties
+        touch dependencies_diff.txt
+        touch packages.txt
         cat temp.txt | grep -Ev "$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/" || true > dependencies_diff.txt
         cat temp.txt | grep "${{ steps.pom-metadata.outputs.group }}" > packages.txt
         
         echo "global_dependencies=" >> $GITHUB_OUTPUT
-        cat $GITHUB_WORKSPACE/dependency_paths.txt >> $GITHUB_OUTPUT
+        cat $GITHUB_WORKSPACE/dependency_paths.txt | sed -z 's/\n/,/g;s/,$/\n/' >> $GITHUB_OUTPUT
         echo "dependencies_diff=" >> $GITHUB_OUTPUT
-        cat dependencies_diff.txt >> $GITHUB_OUTPUT
+        cat dependencies_diff.txt | sed -z 's/\n/,/g;s/,$/\n/' >> $GITHUB_OUTPUT
         echo "packages=" >> $GITHUB_OUTPUT
-        cat packages.txt >> $GITHUB_OUTPUT
+        cat packages.txt | sed -z 's/\n/,/g;s/,$/\n/' >> $GITHUB_OUTPUT
         
         dependencies_diff_empty=true
         if [[ -s dependencies_diff.txt ]]; then
@@ -75,7 +77,7 @@ jobs:
       if: env.diff_empty == 'false'
       with:
         path: |
-          ${{ steps.diff.outputs.dependencies_diff }}
+          {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
         key: |
           ${{ runner.os }}-dependencies_diff-${{ github.ref_slug }}
 
@@ -83,7 +85,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ${{ steps.diff.outputs.packages }}
+          {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
         key: |
           ${{ runner.os }}-packages
 
@@ -91,7 +93,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ${{ steps.diff.outputs.global_dependencies }}
+          {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
         key: |
           ${{ runner.os }}-global_dependencies
           
