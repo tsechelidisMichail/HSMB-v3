@@ -51,6 +51,7 @@ jobs:
         #get current dependencies
         mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed 's/\([^:]*\):/\1\n/;h;s/[^:]*://;s/\./\//g;G;s/\n.*\n/:/' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > current_dependencies.txt    
         #find diff
+        touch temp.txt
         diff $GITHUB_WORKSPACE/dependency_paths.txt current_dependencies.txt | grep -E '^< |^> ' | sed 's/^< //;s/^> //' > temp.txt
         
         #seperate to current project with third parties
