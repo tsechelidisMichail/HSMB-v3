@@ -49,7 +49,7 @@ jobs:
         cd ${{ steps.pom-metadata.outputs.pom-path }}
         
         #get current dependencies
-        mvn dependency:list | sed -n '/\[INFO\] \([^:]*\):\([^:]*\):jar:\([^:]*\):.*/ { s//\1\/\2:\3/; s/\./\//1; s/^ *//; p }' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g"        
+        mvn dependency:list | sed -n '/\[INFO\] \([^:]*\):\([^:]*\):jar:\([^:]*\):.*/ { s//\1\/\2:\3/; s/\./\//1; s/^ *//; p }' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > current_dependencies.txt    
         #find diff
         diff $GITHUB_WORKSPACE/dependency_paths.txt current_dependencies.txt | grep -E '^< |^> ' | sed 's/^< //;s/^> //' > temp.txt
         
