@@ -79,7 +79,7 @@ jobs:
 
     - name: Cache dependencies_diff
       uses: actions/cache@v2
-      if: ${{ ${{ steps.diff.outputs.diff_empty }} == "no"
+      if: ${{ steps.diff.outputs.diff_empty }} == "no"
       with:
         path: |
           ${{ steps.diff.outputs.dependencies_diff }}
