@@ -41,8 +41,9 @@ jobs:
     - name: Find branch dependency diff
       id: diff
       run: |
+        set -x
         #get parent pom global dependencies
-        curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml"
+        curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml" > $GITHUB_WORKSPACE/pom.xml
         mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed "s|^|~/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
         
         cd ${{ steps.pom-metadata.outputs.pom-path }}
@@ -92,7 +93,7 @@ jobs:
       run: |
         set -x
         cd ${{ steps.pom-metadata.outputs.pom-path }}
-        re-save="no"
+        re_save="no"
         
         for package in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
         
@@ -103,15 +104,15 @@ jobs:
         
           if [ $local_sha != $remote_sha ] ;then
             rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency/
-            re-save="yes"
+            re_save="yes"
           fi
         done
-        echo "save=$re-save" >> $GITHUB_OUTPUT
+        echo "save=$re_save" >> $GITHUB_OUTPUT
         mvn -B install
 
     - name: Re-Cache packages
       uses: actions/cache@v2
-      if: ${{ steps.check_update.outputs.save }} == yes
+      if: ${{ steps.check_update.outputs.save }} == "yes"
       with:
         path: |
           ${{ steps.diff.outputs.packages }}
