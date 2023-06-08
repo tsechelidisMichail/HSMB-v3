@@ -87,6 +87,7 @@ jobs:
           ${{ runner.os }}-dependencies_diff-${{ github.ref_slug }}
           
     - name: Cache packages
+      id: cache_packages
       uses: actions/cache@v2
       with:
         path: |
@@ -96,7 +97,7 @@ jobs:
 
     - name: Check project's dependencies for update
       id: check_update
-      if: success()
+      if: steps.cache_packages.outputs.cache-hit == 'true'
       run: |
         set -x
         cd ${{ steps.pom-metadata.outputs.pom-path }}
