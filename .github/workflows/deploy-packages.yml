@@ -46,7 +46,7 @@ jobs:
         curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml" > $GITHUB_WORKSPACE/pom.xml
         mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed 's/\([^:]*\):/\1\n/;h;s/[^:]*://;s/\./\//g;G;s/\n.*\n/:/' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
         
-        cd ${{ steps.pom-metadata.outputs.pom-path }}
+        cd ${{ env.pom-path }}
         
         #get current dependencies
         mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed 's/\([^:]*\):/\1\n/;h;s/[^:]*://;s/\./\//g;G;s/\n.*\n/:/' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > current_dependencies.txt    
