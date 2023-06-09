@@ -39,7 +39,7 @@ jobs:
         echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
 
     - name: Check project's dependencies for update
-      if: ${{ steps.setup.outputs.cache-hit }} == 'true'
+      if: steps.setup.outputs.cache-hit == 'true'
       run: |
         set -x
         cd ${{ steps.pom-metadata.outputs.pom-path }}
@@ -63,7 +63,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: $HOME/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-maven-
 
     - name: Delete package
