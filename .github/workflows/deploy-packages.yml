@@ -20,12 +20,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Set settings.xml
-        uses: whelk-io/maven-settings-xml-action@v20
-        with:
-          repositories: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "url": "${{ secrets.MAVEN_REPO_URL }}" }]'
-          servers: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "username": "${{ secrets.MAVEN_REPO_NAME }}", "password": "${{ secrets.MAVEN_REPO_TOKEN }}" }]'
-
       - name: Find pom metadata
         id: pom-metadata
         run: |
@@ -65,6 +59,12 @@ jobs:
           java-version: '19'
           distribution: 'temurin'
           cache: 'maven'
+
+      - name: Set settings.xml
+        uses: whelk-io/maven-settings-xml-action@v20
+        with:
+          repositories: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "url": "${{ secrets.MAVEN_REPO_URL }}" }]'
+          servers: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "username": "${{ secrets.MAVEN_REPO_NAME }}", "password": "${{ secrets.MAVEN_REPO_TOKEN }}" }]'
 
       - name: Delete package
         uses: actions/delete-package-versions@v2
