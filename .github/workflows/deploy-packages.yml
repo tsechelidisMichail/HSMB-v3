@@ -59,12 +59,12 @@ jobs:
           done
           mvn -B install
 
-      - name: Re-cache
-        uses: actions/cache@v2
+        #to invalidate the exact matches cache as above
+      - uses: actions/setup-java@v3
         with:
-          path: $HOME/.m2/repository
-          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
+          java-version: '19'
+          distribution: 'temurin'
+          cache: 'maven'
 
       - name: Delete package
         uses: actions/delete-package-versions@v2
