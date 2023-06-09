@@ -5,146 +5,74 @@ on:
   push:
     paths-ignore:
       - '.github/workflows/*'
-    branches:
-      - 'prod-*'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - uses: actions/setup-java@v3
-      with:
-        java-version: '19'
-        distribution: 'temurin'
+      - uses: actions/setup-java@v3
+        id: setup
+        with:
+          java-version: '19'
+          distribution: 'temurin'
+          cache: 'maven'
 
-    - name: Set settings.xml
-      uses: whelk-io/maven-settings-xml-action@v20
-      with:
-        repositories: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "url": "${{ secrets.MAVEN_REPO_URL }}" }]'
-        servers: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "username": "${{ secrets.MAVEN_REPO_NAME }}", "password": "${{ secrets.MAVEN_REPO_TOKEN }}" }]'
+      - name: Set settings.xml
+        uses: whelk-io/maven-settings-xml-action@v20
+        with:
+          repositories: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "url": "${{ secrets.MAVEN_REPO_URL }}" }]'
+          servers: '[{ "id": "${{ secrets.MAVEN_REPO_ID }}", "username": "${{ secrets.MAVEN_REPO_NAME }}", "password": "${{ secrets.MAVEN_REPO_TOKEN }}" }]'
 
-    - name: Find pom metadata
-      id: pom-metadata
-      run: |
-        export POM_PATH=$(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
-        cd $POM_PATH
-        export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
-        export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
-        COORDINATES="$GROUP_ID.$ARTIFACT_ID"
-        echo "group=$GROUP_ID" >> $GITHUB_ENV
-        echo "coordinates=$COORDINATES" >> $GITHUB_ENV
-        echo "pom-path=$POM_PATH" >> $GITHUB_ENV
+      - name: Find pom metadata
+        id: pom-metadata
+        run: |
+          export POM_PATH=$(find . -name "pom.xml" -type f | sed 's|/[^/]*$||')
+          cd $POM_PATH
+          export GROUP_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -DforceStdout)
+          export ARTIFACT_ID=$(mvn -q org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -DforceStdout)
+          COORDINATES="$GROUP_ID.$ARTIFACT_ID"
+          echo "group=$GROUP_ID" >> $GITHUB_OUTPUT
+          echo "coordinates=$COORDINATES" >> $GITHUB_OUTPUT
+          echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
 
-    - name: Find branch dependency diff
-      id: diff
-      run: |
-        set -x
-        #get parent pom global dependencies
-        curl -s -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/prod-parent_pom/pom.xml" > $GITHUB_WORKSPACE/pom.xml
-        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed 's/\([^:]*\):/\1\n/;h;s/[^:]*://;s/\./\//g;G;s/\n.*\n/:/' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > $GITHUB_WORKSPACE/dependency_paths.txt
-        
-        cd ${{ env.pom-path }}
-        
-        #get current dependencies
-        mvn dependency:list | sed -n 's/^\[INFO\] *\([^:]*\):\([^:]*\):jar:\([^:]*\):.*/\1\/\2:\3/p' | sed 's/\([^:]*\):/\1\n/;h;s/[^:]*://;s/\./\//g;G;s/\n.*\n/:/' | sed "s|^|$HOME/.m2/repository/|; s/:/\//g" > current_dependencies.txt    
-        #find diff
-        touch temp.txt
-        diff $GITHUB_WORKSPACE/dependency_paths.txt current_dependencies.txt | grep -E '^< |^> ' | sed 's/^< //;s/^> //' > temp.txt
-        
-        #seperate to current project with third parties
-        touch dependencies_diff.txt
-        touch packages.txt
-        cat temp.txt | grep -Ev "$HOME/.m2/repository/${{ env.group }}/" || true > dependencies_diff.txt
-        cat temp.txt | grep "${{ env.group }}" || true > packages.txt
-        
-        echo "global_dependencies=$(sed -z 's/\n/,/g;s/,$/\n/' $GITHUB_WORKSPACE/dependency_paths.txt)" >> $GITHUB_OUTPUT
-        echo "dependencies_diff=$(sed -z 's/\n/,/g;s/,$/\n/' dependencies_diff.txt)" >> $GITHUB_OUTPUT
-        echo "packages=$(sed -z 's/\n/,/g;s/,$/\n/' packages.txt)" >> $GITHUB_OUTPUT
-        
-        dependencies_diff_empty=true
-        if [[ -s dependencies_diff.txt ]]; then
-          dependencies_diff_empty=false
-        fi
-        echo "diff_empty=$dependencies_diff_empty" >> $GITHUB_ENV
-        
-        dependencies_packages_empty=true
-        if [[ -s packages.txt ]]; then
-          dependencies_packages_empty=false
-        fi
-        echo "packages_empty=$dependencies_packages_empty" >> $GITHUB_ENV
-
-    - name: Cache global_dependencies
-      uses: actions/cache@v2
-      with:
-        path: |
-          {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
-        key: |
-          ${{ runner.os }}-global_dependencies
-
-    - name: Cache dependencies_diff
-      uses: actions/cache@v2
-      if: env.diff_empty == 'false'
-      with:
-        path: |
-          {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
-        key: |
-          ${{ runner.os }}-dependencies_diff-${{ github.ref_slug }}
+      - name: Check project's dependencies for update
+        if: ${{ steps.setup.outputs.cache-hit }} == 'true'
+        run: |
+          set -x
+          cd ${{ steps.pom-metadata.outputs.pom-path }}
+          mvn dependency:list | grep "${{ steps.pom-metadata.outputs.group }}" > list.txt
           
-    - name: Cache packages
-      id: cache_packages
-      uses: actions/cache@v2
-      if: env.packages_empty == 'false'
-      with:
-        path: |
-          {{ steps.diff.outputs.global_dependencies.split(',') | join('\n') }}
-        key: |
-          ${{ runner.os }}-packages
+          for dependency in $(cat list.txt | sed -n "s/.*${{ steps.pom-metadata.outputs.group }}:\([^:]*\):.*$/\1/p");do 
+          
+            version=$(cat list.txt | sed -n "s/.*$dependency:jar:\([^:]*\):.*$/\1/p")
+            remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$dependency/$version/$dependency-$version.jar.sha1)
+            local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency"
+            local_sha=$( cat $local_path/$version/$dependency-$version.jar.sha1)
+          
+            if [ $local_sha != $remote_sha ] ;then
+              rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency
+            fi
+          
+          done
+          mvn -B install
 
-    - name: Check project's dependencies for update
-      id: check_update
-      if: steps.cache_packages.outputs.cache-hit == 'true'
-      run: |
-        set -x
-        cd ${{ env.pom-path }}
-        re_save=false
-        
-        for pkg in $(cat packages.txt | sed -E 's|.*/([^/]+)/[^/]+$|\1|' );do 
-          package=$(echo "$GITHUB_REPOSITORY/$pkg" | sed "s/${{ env.group }}\///;s/\//./")
-        
-          version=$(cat packages.txt | grep "$pkg/" | sed -E 's|.*/([^/]+)/?$|\1|')
-          remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ env.group }}/$package/$version/$package-$version.jar.sha1)
-          local_path="$HOME/.m2/repository/${{ env.group }}/$package"
-          local_sha=$( cat $local_path/$version/$package-$version.jar.sha1)
-        
-          if [ $local_sha != $remote_sha ] ;then
-            rm -rf $HOME/.m2/repository/${{ env.group }}/$package/
-            re_save=true
-          fi
-        done
-        echo "re_save=$re_save" >> $GITHUB_ENV
-        mvn -B install
+      - name: Re-cache
+        uses: actions/cache@v2
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
 
-    - name: Re-Cache packages
-      uses: actions/cache@v2
-      if: env.re_save == 'true'
-      with:
-        path: |
-          ${{ steps.diff.outputs.packages }}
-        key: |
-          ${{ runner.os }}-packages
+      - name: Delete package
+        uses: actions/delete-package-versions@v2
+        with:
+          token: ${{ secrets.MAVEN_REPO_TOKEN }}
+          package-name: ${{ steps.pom-metadata.outputs.coordinates }}
 
-    - name: Delete package
-      uses: actions/delete-package-versions@v2
-      with:
-        token: ${{ secrets.MAVEN_REPO_TOKEN }}
-        package-name: ${{ env.coordinates }}
-
-    - name: Publish Package
-      run: |
-        cd ${{ env.pom-path }}
-        mvn compile
-        mvn install
-        mvn deploy
+      - name: Publish Package
+        run: |
+          cd ${{ steps.pom-metadata.outputs.pom-path }}
+          mvn -B deploy
