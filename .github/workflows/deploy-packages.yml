@@ -39,23 +39,23 @@ jobs:
           echo "pom-path=$POM_PATH" >> $GITHUB_OUTPUT
 
       - name: Check project's dependencies for update
-        if: ${{ steps.setup.outputs.cache-hit }} == 'true'
+        if: steps.setup.outputs.cache-hit == 'true'
         run: |
           set -x
           cd ${{ steps.pom-metadata.outputs.pom-path }}
           mvn dependency:list | grep "${{ steps.pom-metadata.outputs.group }}" > list.txt
-          
+
           for dependency in $(cat list.txt | sed -n "s/.*${{ steps.pom-metadata.outputs.group }}:\([^:]*\):.*$/\1/p");do 
-          
+
             version=$(cat list.txt | sed -n "s/.*$dependency:jar:\([^:]*\):.*$/\1/p")
             remote_sha=$(curl -H "Authorization: Bearer ${{ secrets.MAVEN_REPO_TOKEN }}" https://maven.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.pom-metadata.outputs.group }}/$dependency/$version/$dependency-$version.jar.sha1)
             local_path="$HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency"
             local_sha=$( cat $local_path/$version/$dependency-$version.jar.sha1)
-          
+
             if [ $local_sha != $remote_sha ] ;then
               rm -rf $HOME/.m2/repository/${{ steps.pom-metadata.outputs.group }}/$dependency
             fi
-          
+
           done
           mvn -B install
 
@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: $HOME/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
       - name: Delete package
