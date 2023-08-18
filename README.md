@@ -9,7 +9,7 @@ The proposed architecture that the example is based upon aims to provide the pro
 
 - [Introduction](#introduction)
 - [Architecture Overview](#architecture-overview)
-- [Modules-Branches-Packages](#Modules-Branches-Packages)
+- [Modules-Branches-Packages](#modules-branches-packages)
 - [License](#license)
 
 ## Introduction
