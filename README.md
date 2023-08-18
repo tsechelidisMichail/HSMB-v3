@@ -9,8 +9,7 @@ The proposed architecture that the example is based upon aims to provide the pro
 
 - [Introduction](#introduction)
 - [Architecture Overview](#architecture-overview)
-- [Branches-Modules](#Branches-Modules)
-- [Implementation Strategy](#Implementation-Strategy)
+- [Modules-Branches-Packages](#Modules-Branches-Packages)
 - [License](#license)
 
 ## Introduction
@@ -34,7 +33,7 @@ The internal functionalities remain hidden from developers since those are provi
 ![Figure 1 - Modular Monolith vs Monolith drawio](https://github.com/tsechelidisMichail/HexagonalSpring_Modular/assets/82568995/af7b7cae-1e05-488a-a755-5933bb5c226a)
 
 
-## Branches-Modules
+## Modules-Branches-Packages
 
 - `main`: Initializer scanning in runtime the dependencies/services. It is the executable.
 - `domain`: Global/core logic that any service can use (interface definitions only - like API).
