@@ -1,4 +1,4 @@
-# HexagonalSpring_Modular
+# HSMB-v3
 
 HSMB-v3 is a sample project that demonstrates the implementation strategy of a [HexagonalSpring_Modular](https://github.com/tsechelidisMichail/HexagonalSpring_Modular) 
 aiming to resolve the remaining development requirements of it. 
