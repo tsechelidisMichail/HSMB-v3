@@ -2,7 +2,7 @@
 
 HSMB-v3 is a sample project that demonstrates the implementation strategy of a [HexagonalSpring_Modular](https://github.com/tsechelidisMichail/HexagonalSpring_Modular) 
 aiming to resolve the remaining development requirements of it. 
-The proposed architecture that the example is based upon aims to provide the project with the ability to later **cooporate** with Service Oriented Architectures.
+The proposed architecture that the example is based upon aims to provide the project with the ability to later **cooperate** with Service Oriented Architectures.
 
 
 ## Table of Contents
