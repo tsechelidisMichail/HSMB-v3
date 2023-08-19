@@ -14,7 +14,7 @@ The proposed architecture that the example is based upon aims to provide the pro
 
 ## Introduction
 
-Hexagonal architecture is a good starting point for a Distributed System to identify its surrounding functionalites. By already having interfaces as ports, the indetification of the modules-to-be-created becomes easier.
+Hexagonal architecture is a good starting point to identify the surrounding functionalites of a project being build in a Distributed context. By already having interfaces as ports, the indetification of the modules-to-be-created becomes easier.
  This means, that apart from the domain, there is the need for persistence and code that enables the communication with other systems, and those are seperated from each other.  
 The modules in this repository have their own lifecycle compared to HexagonalSpring_Modular since now their respective artifacts are uploaded in Github packages.  
 For more information about the arising questions see:  
