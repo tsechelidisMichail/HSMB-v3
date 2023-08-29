@@ -18,7 +18,7 @@ Hexagonal architecture is a good starting point to identify the surrounding func
  This means, that apart from the domain, there is the need for persistence and code that enables the communication with other systems, and those are seperated from each other.  
 The modules in this repository have their own lifecycle compared to HexagonalSpring_Modular since now their respective artifacts are uploaded in Github packages.  
 For more information about the arising questions see:  
-- [M. Tsechelidis, N. Nikolaidis, T. Maikantis, and A. Ampatzoglou, "Modular Monoliths the Way to Standardization", 3rd Eclipse Security, AI, Architecture and Modelling Conference on Cloud to Edge Continuum (ESAAM 2023), Germany, 2023.](#esaam-link-TBA)
+- [M. Tsechelidis, N. Nikolaidis, T. Maikantis, and A. Ampatzoglou, "Modular Monoliths the Way to Standardization", 3rd Eclipse Security, AI, Architecture and Modelling Conference on Cloud to Edge Continuum (ESAAM 2023), Germany, 2023.](https://www.researchgate.net/publication/373195134_Modular_Monoliths_the_way_to_Standardization)
 - [M. Tsechelidis, "Developing Distributed Systems with Modular Monoliths and Microservices", psepheda, University of Macedonia, Greece, 2023.](#BSc-link-TBA)
 <a name="esaam-link-TBA"></a><a name="BSc-link-TBA"></a>
 
